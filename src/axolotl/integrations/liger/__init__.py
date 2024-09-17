@@ -23,6 +23,7 @@ import sys
 
 from liger_kernel.transformers.cross_entropy import LigerCrossEntropyLoss
 from liger_kernel.transformers.geglu import LigerGEGLUMLP
+from liger_kernel.transformers.layer_norm import LigerLayerNorm
 from liger_kernel.transformers.rms_norm import LigerRMSNorm
 from liger_kernel.transformers.rope import liger_rotary_pos_emb
 from liger_kernel.transformers.swiglu import LigerSwiGLUMLP
@@ -182,3 +183,16 @@ class LigerPlugin(BasePlugin):
                 modeling_phi3.CrossEntropyLoss = LigerCrossEntropyLoss
             if cfg.liger_fused_linear_cross_entropy:
                 modeling_phi3.Phi3ForCausalLM.forward = phi3_lce_forward
+        
+        elif cfg.model_config.type == "cohere":
+            from liger_kernel.transformers.models.cohere import lce_forward as cohere_lce_forward
+            from transformers.models.cohere import modeling_cohere
+
+            if cfg.liger_layer_norm:
+                modeling_cohere.CohereLayerNorm = LigerLayerNorm
+            if cfg.liger_swiglu:
+                modeling_cohere.CohereMLP = LigerSwiGLUMLP
+            if cfg.liger_cross_entropy:
+                modeling_cohere.CrossEntropyLoss = LigerCrossEntropyLoss
+            if cfg.liger_fused_linear_cross_entropy:
+                modeling_cohere.CohereForCausalLM.forward = cohere_lce_forward
